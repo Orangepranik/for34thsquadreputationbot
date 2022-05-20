@@ -1,0 +1,2 @@
+q={"message_id": 882423, "from": {"id": 684258705, "is_bot": false, "first_name": "チリ", "last_name": "willy", "username": "chili173"}, "chat": {"id": -1001405587478, "title": "Чатик(OPsqd)", "type": "supergroup"}, "date": 1653062244, "text": "чё происходит"}
+print(q['id'])
