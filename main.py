@@ -9,7 +9,7 @@ dp = Dispatcher(bot, storage = storage)
 
 all_big_words = []
 start_reputation = 0
-bad_words = ['говно', 'хуйня', 'гадость', 'отвратительно', "удали", "удоли", "борк", "боян", "баян", "было"]
+bad_words = ['говно', 'хуйня', 'гадость', 'отвратительно', "удали", "удоли", "борк", "боян", "баян", "было","-"]
 for big_bad_words in bad_words:
     capitalize_bad_words = big_bad_words.capitalize()
     all_big_words.append(capitalize_bad_words)
@@ -30,10 +30,14 @@ async def upragereputationfunc(message: types.Message):
     idusereplyer = message.from_user.id
     idusergetreplayed = message.reply_to_message
     username_repleyer = message.from_user.username
+    print(idusergetreplayed)
+    try:
+        id_user_get_replayed_1 = idusergetreplayed['from']['id']
+        username_user_get_replayed_1 = idusergetreplayed['from']['username']
 
-    id_user_get_replayed_1 = idusergetreplayed['from']['id']
-    username_user_get_replayed_1 = idusergetreplayed['from']['username']
-
+    except TypeError:
+        id_user_get_replayed_1 = idusergetreplayed['from']['id']
+        username_user_get_replayed_1 = idusergetreplayed['from']['username']
     checkid_1 = cur.execute('SELECT * FROM reputation WHERE userid==?', (idusereplyer,)).fetchone()
     checkid_2 = cur.execute('SELECT * FROM reputation WHERE userid==?', (id_user_get_replayed_1,)).fetchone()
     print(username_user_get_replayed_1, id_user_get_replayed_1)
@@ -47,14 +51,20 @@ async def upragereputationfunc(message: types.Message):
     getreputationuser_2 = checkid_2[2]
     print(getreputationuser_2)
     int_getreputationuser_2 = int(float(getreputationuser_2))
-    reputation_up = int_getreputationuser_2+1
-    print(reputation_up)
-    await message.answer(f"{reputation_up}")
-    select_user = cur.execute("SELECT reputation FROM reputation WHERE userid==?", (id_user_get_replayed_1,)).fetchone()
-    update_reputation_up = ('UPDATE reputation SET reputation = ? WHERE userid =?')
-    infoupdate = (reputation_up, id_user_get_replayed_1)
-    cur.execute(update_reputation_up, infoupdate)
+    if idusereplyer != id_user_get_replayed_1:
+        reputation_up = int_getreputationuser_2+1
+        print(reputation_up)
+        await message.answer(f"{reputation_up}")
+        select_user = cur.execute("SELECT reputation FROM reputation WHERE userid==?", (id_user_get_replayed_1,)).fetchone()
+        update_reputation_up = ('UPDATE reputation SET reputation = ? WHERE userid =?')
+        infoupdate = (reputation_up, id_user_get_replayed_1)
+        cur.execute(update_reputation_up, infoupdate)
+        await message.answer(f"{username_repleyer} повысил репутацию {username_user_get_replayed_1} на 1 единицу")
+    else:
+        await message.answer(f"{username_repleyer} ты не можешь сам себе повышать рейтинг")
     base.commit()
+
+
 @dp.message_handler(Text(equals=all_big_words))
 async def decreasereputation(message: types.Message):
     idusereplyer = message.from_user.id
@@ -67,24 +77,35 @@ async def decreasereputation(message: types.Message):
     checkid_1 = cur.execute('SELECT * FROM reputation WHERE userid==?', (idusereplyer,)).fetchone()
     checkid_2 = cur.execute('SELECT * FROM reputation WHERE userid==?', (id_user_get_replayed_1,)).fetchone()
     print(username_user_get_replayed_1, id_user_get_replayed_1)
+
     if checkid_1 is None:
         cur.execute("INSERT INTO reputation(username,userid,reputation) VALUES(?, ?, ?)", (username_repleyer, idusereplyer, start_reputation))
         base.commit()
     if checkid_2 is None:
         cur.execute("INSERT INTO reputation(username,userid,reputation) VALUES(?, ?, ?)", (username_user_get_replayed_1, id_user_get_replayed_1, start_reputation))
         base.commit()
+    try:
+        id_user_get_replayed_1 = idusergetreplayed['from']['id']
+        username_user_get_replayed_1 = idusergetreplayed['from']['username']
+
+    except TypeError:
+        id_user_get_replayed_1 = idusergetreplayed['from']['id']
+        username_user_get_replayed_1 = idusergetreplayed['from']['username']
     getreputationuser_1 = checkid_1[2]
     getreputationuser_2 = checkid_2[2]
     int_getreputationuser_2 = int(float(getreputationuser_2))
-    if int_getreputationuser_2 == 0:
-        await message.answer('Твою репутацию понизили')
-    reputation_down = int_getreputationuser_2-1
-
-    await message.answer(f"{reputation_down}")
-    select_user = cur.execute("SELECT reputation FROM reputation WHERE userid==?", (id_user_get_replayed_1,)).fetchone()
-    update_reputation_up = ('UPDATE reputation SET reputation = ? WHERE userid =?')
-    infoupdate = (reputation_down, id_user_get_replayed_1)
-    cur.execute(update_reputation_up, infoupdate)
+    if idusereplyer != id_user_get_replayed_1:
+        if int_getreputationuser_2 <= 0 or int_getreputationuser_2 == 0:
+            await message.answer(f'{username_repleyer} ты не можешь понизить репутацию {username_user_get_replayed_1}, так как его репутация и так на 0 ')
+        else:
+            reputation_down = int_getreputationuser_2-1
+            select_user = cur.execute("SELECT reputation FROM reputation WHERE userid==?", (id_user_get_replayed_1,)).fetchone()
+            update_reputation_up = ('UPDATE reputation SET reputation = ? WHERE userid =?')
+            infoupdate = (reputation_down, id_user_get_replayed_1)
+            cur.execute(update_reputation_up, infoupdate)
+            await message.answer(f'{username_repleyer} понизил репутацию {username_user_get_replayed_1} на 1 единицу')
+    else:
+        await message.answer(f'{username_repleyer} ты не можешь понизить сам себе репутацию')
     base.commit()
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
